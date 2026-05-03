@@ -1,47 +1,42 @@
-# Architecture
+# System Architecture
 
-WeChatRSS is built with a modern Python stack designed for efficiency and stealth.
+WeChatRSS is designed for stability and observability.
 
-## System Overview
+## 🏗️ Tech Stack
 
-```mermaid
-graph TD
-    User[RSS Reader / User] -->|Fetch RSS| FastAPI[FastAPI Server]
-    FastAPI -->|Query| SQLite[(SQLite DB)]
-    FastAPI -->|Serve| Media[Local Media /data/media]
-    
-    Scheduler[APScheduler] -->|Trigger| Scraper[Playwright Scraper]
-    Scraper -->|Proxy Access| WeRead[WeRead Bridge]
-    WeRead -->|Fetch| WeChat[WeChat MP Articles]
-    
-    Scraper -->|Save| SQLite
-    Scraper -->|Mirror Images| Media
-```
+*   **FastAPI:** High-performance async web framework.
+*   **Playwright:** The engine for browser automation and stealth.
+*   **aiosqlite:** Non-blocking SQLite access.
+*   **APScheduler:** Background job management with random jitter to prevent detection.
+*   **Readability-lxml:** Clean text extraction from messy HTML.
 
-## Component Breakdown
+## 💾 Data Management
 
-### 1. Backend (FastAPI)
-The core server handles:
-*   **Dashboard:** A Jinja2-based web interface for administrators and users.
-*   **User Management:** Secure password hashing (Bcrypt) and session handling.
-*   **RSS Generation:** Dynamic generation of XML feeds with rewritten image paths.
-*   **Static Asset Serving:** Serving locally mirrored images from `/media`.
+*   **Database:** `data/wechat_rss.db`
+    *   `users`: Login and unique RSS hash.
+    *   `accounts`: Subscribed channels and health status.
+    *   `articles`: Full text, URLs, and pub dates.
+    *   `system_logs`: Direct transparency into background worker events.
+*   **Media:** `data/media/`
+    *   Local mirror of WeChat images.
 
-### 2. Automation (Playwright)
-Uses the Chromium engine to perform browser-based scraping. This approach is superior to simple HTTP requests because:
-*   It executes JavaScript (required for WeChat's lazy loading).
-*   It maintains session persistence via `state.json`.
-*   It mimics human behavior through scrolling and interaction.
+## 🛡️ Security Layers
 
-### 3. Storage (SQLite)
-A lightweight database storing:
-*   **Users:** Credentials and private RSS hashes.
-*   **Accounts:** Tracked WeChat Official Accounts.
-*   **Articles:** A global cache of full-text articles and metadata.
-*   **Settings:** Scraper configuration (intervals, user-agents, stealth toggles).
+### 1. Persistent Browser Profiles
+By storing the full Chromium profile folder on disk, we maintain a consistent browser "fingerprint." This includes cache, local storage, and cookies that Tencent's security systems look for to distinguish humans from bots.
 
-### 4. Media Mirroring
-To prevent broken images (due to WeChat's hotlink protection), the system:
-1.  Downloads all images during scraping.
-2.  Stores them locally with MD5-based filenames to avoid duplicates.
-3.  Rewrites article HTML to point to the local FastAPI media endpoint.
+### 2. CSRF & Auth
+All state-changing API endpoints require a valid CSRF token. Dashboard access is protected by persistent, database-backed sessions.
+
+### 3. Observability (Debug Snapshots)
+If the scraper hits a block, it automatically saves:
+*   A full-page **Screenshot** (.png)
+*   The raw **HTML Source** (.html)
+These are stored in `data/debug/` for immediate diagnosis.
+
+## ⚙️ Scheduler Jitter
+The background scraper uses **Random Jitter**. If the interval is set to 6 hours, it will add/subtract a random amount of minutes to each run to ensure the request patterns are not perfectly predictable.
+
+---
+
+**Back to:** [Overview](index.md)

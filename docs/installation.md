@@ -1,55 +1,38 @@
-# Installation
+# Installation Guide
 
-Follow these steps to set up WeChatRSS on your server or local machine.
+Follow these steps to set up WeChatRSS on your local machine or server.
 
-## Prerequisites
+## 📋 Prerequisites
 
-*   Python 3.10 or higher.
-*   A WeChat account (to scan the login QR code).
+*   **Python:** Version 3.13 or higher.
+*   **Operating System:** Windows, Linux, or macOS.
+*   **Browser:** Playwright (Chromium) will be installed automatically.
 
-## Step-by-Step Setup
+## ⚙️ Step-by-Step Setup
 
-### 1. Clone and Install Dependencies
+### 1. Environment Preparation
+It is recommended to use a virtual environment:
 ```bash
-git clone <repo_url>
-cd WeChatRSS
-pip install -r requirements.txt
+python -m venv venv
+venv\Scripts\activate  # Windows
+source venv/bin/activate  # Linux/macOS
 ```
 
-### 2. Install Playwright Browsers
-The system requires Chromium to be installed via Playwright:
+### 2. Install Dependencies
 ```bash
+pip install -r requirements.txt
 python -m playwright install chromium
 ```
 
-### 3. Initialize Database
-Run the database script once to set up the schema and create the default admin.
-```bash
-python database.py
-```
-*   **Default Admin:** `admin` / `admin`
+### 3. Database Initialization
+The database is initialized automatically on the first run of the server. However, you can manually trigger a clean state by deleting the `data/` folder if needed.
 
-### 4. Perform Initial Authentication
-This step must be done with a display (or via remote VNC/RDP) as it opens a browser window.
-```bash
-python auth.py
-```
-*   Scan the QR code with your phone.
-*   Wait for the "Login detected!" message.
+### 4. Firewall & Ports
+The server runs on port **8000** by default. Ensure this port is open if you intend to access the dashboard from another device or expose the RSS feed to MS Teams.
 
-### 5. Start the Server
-```bash
-python main.py
-```
-Access the dashboard at `http://localhost:8000`.
+## 🐳 Docker (Optional)
+A Dockerfile will be provided in a future update. For now, manual installation is the most reliable way to handle the headed browser required for initial authentication.
 
-## Deployment Recommendations
+---
 
-For production, it is recommended to use **Gunicorn** with the **Uvicorn** worker:
-```bash
-pip install gunicorn
-gunicorn main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000
-```
-
-### Reverse Proxy
-Always run WeChatRSS behind a reverse proxy like **Nginx** with SSL enabled (using Let's Encrypt). This protects your session cookies and dashboard access.
+**Next Step:** [Authentication Guide](authentication.md)

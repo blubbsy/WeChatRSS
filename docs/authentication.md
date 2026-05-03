@@ -1,27 +1,41 @@
-# Authentication
+# Authentication & Bypass
 
-WeChat avoids traditional API access. WeChatRSS uses a "Bridge" approach via **WeRead (微信读书)** to access Official Account content safely.
+WeChatRSS uses a "Persistent Browser Profile" to stay undetected. You must perform a one-time "priming" of this profile.
 
-## The WeRead Bridge
+## 🔑 The "Ultimate Auth" Script
 
-WeRead provides a web-based portal to WeChat Official Account articles at `weread.qq.com`. By authenticating with WeRead, we gain access to a less restricted view of the WeChat ecosystem compared to the direct `mp.weixin.qq.com` domain.
+The script `auth_ultimate.py` is the key to the system's stealth capabilities. It performs three critical actions in a single headed browser session.
 
-## Manual Initial Login
+### How to use:
+Run the command in your terminal:
+```bash
+python auth_ultimate.py
+```
 
-Authentication requires a one-time manual step to handle the WeChat QR code scan:
+### The Three Phases:
 
-1.  Run `python auth.py`.
-2.  A non-headless Chromium window will open at `weread.qq.com`.
-3.  Scan the QR code with your WeChat app.
-4.  Once the login is detected, the script captures the **Storage State**.
+1.  **WeChat/WeRead Login:**
+    *   A browser window will open at `weread.qq.com`. 
+    *   Scan the QR code with your WeChat mobile app.
+    *   This establishes a trusted Tencent session that allows the scraper to access full article text.
 
-## Session Persistence
+2.  **Sogou CAPTCHA Bypass:**
+    *   The window will automatically navigate to Sogou Search.
+    *   If you see a verification code or a puzzle, **solve it immediately**.
+    *   This "white-lists" your IP address for article discovery.
 
-The captured state is saved to `data/state.json`. It includes:
-*   **Cookies:** Authentication tokens and session identifiers.
-*   **Local Storage:** Application-specific state.
+3.  **Account Following:**
+    *   While the window is open, search for your target Official Accounts and click **Follow** (关注).
+    *   This ensures the accounts appear in your private library, which the scraper uses as a high-reliability fallback.
 
-The background scraper loads this state for every run, allowing it to act as a logged-in user without re-scanning the QR code.
+## 🕒 How often is this needed?
 
-!!! warning "Security Note"
-    Never share or commit your `data/state.json` file. It contains your full authentication session.
+*   **One-Time Setup:** Usually, you only need to do this once. The session data is saved to `data/profiles/` and persists across restarts.
+*   **Re-Auth:** If you see "RE-AUTH NEEDED" or "Sogou BLOCK" in the dashboard logs, simply run the script again to refresh the tokens.
+
+## 🛡️ Privacy Note
+The browser profile is stored **entirely on your machine**. WeChatRSS never sends your cookies or session data to any external server (except for the target sites WeRead/Sogou).
+
+---
+
+**Next Step:** [Scraping & MS Teams Integration](scraping.md)

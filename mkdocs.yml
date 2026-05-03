@@ -3,17 +3,23 @@ theme:
   name: material
   palette:
     primary: indigo
-    accent: indigo
+    accent: light blue
   features:
     - navigation.tabs
     - navigation.sections
     - content.code.copy
 
 nav:
-  - Home: index.md
-  - Architecture: architecture.md
-  - Authentication: authentication.md
-  - Scraping & Safety: scraping.md
-  - API Reference: api.md
+  - Overview: index.md
   - Installation: installation.md
-  - Audit & Roadmap: roadmap.md
+  - Authentication: authentication.md
+  - Scraping & MS Teams: scraping.md
+  - Architecture: architecture.md
+
+markdown_extensions:
+  - admonition
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences

@@ -1,36 +1,35 @@
-# Scraping & Safety
+# Scraping & MS Teams
 
-WeChat employs advanced anti-bot technologies. WeChatRSS implements several safety mechanisms to remain undetected.
+WeChatRSS is built specifically to deliver high-quality, full-text content to enterprise tools like MS Teams.
 
-## Anti-Detection Mechanisms
+## 🔍 Discovery Logic
 
-### 1. WeRead Proxy Access
-Instead of scraping the main WeChat portal, the system accesses articles through `weread.qq.com/web/reader/mp/{account_id}`. This acts as a natural proxy and utilizes a different set of rate limits.
+The scraper uses a "Discovery-First" model to find the latest articles without being restricted by your personal library.
 
-### 2. Browser Stealth
-The system uses the `playwright-stealth` library, which applies patches to Chromium to hide common bot signatures, such as:
-*   `navigator.webdriver` flags.
-*   Consistent WebGL and Canvas fingerprints.
-*   Standardized Chrome-like `navigator` properties.
+1.  **Sogou Search (Primary):** The system searches Sogou Articles by the account's nickname.
+2.  **Biz-Lock Verification:** Once links are found, it resolves the unique `__biz` ID of the first article. If it matches the stored ID, the entire search result is trusted. This handles renamed or sub-branded accounts.
+3.  **WeRead Shelf (Fallback):** If Sogou is blocked, the scraper looks inside your authenticated WeRead library for updates.
 
-### 3. Human-like Behavior
-The scraper (`scraper.py`) implements:
-*   **Randomized Jitter:** Scans are not perfectly periodic. A random delay (default ±30 mins) is added to every scheduled run.
-*   **Inter-action Delays:** `asyncio.sleep` with random durations between page loads and interactions.
-*   **Natural Scrolling:** Before capturing content, the scraper scrolls down the page at variable speeds to trigger lazy-loaded images and mimic a reading human.
+## 📄 Extraction Logic (Full Text)
 
-### 4. Custom User-Agents
-The system uses a randomized but modern desktop User-Agent to blend in with normal browser traffic.
+To ensure the best reading experience in MS Teams, the extraction follows a tiered hierarchy:
 
-## Content Extraction
+1.  **Direct Access:** The system first tries to load the article directly from `mp.weixin.qq.com`. 
+2.  **WeRead Proxy Fallback:** If direct access is blocked (common for automated browsers), it uses a hidden WeRead "Proxy Viewer" (`/wrpage/mp/index.html`). This cleans the HTML and bypasses hotlink protection.
 
-WeChatRSS uses the **Readability** algorithm (similar to "Reader Mode" in browsers) to:
-1.  Strip ads, menus, and tracking scripts.
-2.  Extract the core article content.
-3.  Normalize HTML for RSS compatibility.
+## 🖼️ Image Mirroring
 
-## Safety Recommendations
+WeChat protects its images from being displayed on external sites (Hotlink Protection).
+*   **Process:** During extraction, the system downloads all article images to `data/media/`.
+*   **RSS Delivery:** The RSS feed rewriter replaces local paths with **Absolute Public URLs** so that MS Teams can fetch and display the images correctly.
 
-*   **Don't over-fetch:** Keep `fetch_interval_hours` at 6 or higher.
-*   **Limit Subscriptions:** Excessive scraping of hundreds of accounts from a single IP may trigger temporary bans.
-*   **Use a Residential IP:** If hosting on a VPS, try to use one with a "clean" IP range.
+## 🤝 MS Teams Integration
+
+1.  Copy your private RSS link from the dashboard: `http://[IP]:8000/rss/[hash]`.
+2.  In MS Teams, add the **RSS Connector** to your channel.
+3.  Paste the link and set the frequency.
+4.  **Result:** Teams will post a rich-text card with the full article content and images for every new update.
+
+---
+
+**Next Step:** [System Architecture](architecture.md)
