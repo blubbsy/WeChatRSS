@@ -4,12 +4,13 @@ WeChatRSS uses a "Persistent Browser Profile" to stay undetected. You must perfo
 
 ## 🔑 The "Ultimate Auth" Script
 
-The script `auth_ultimate.py` is the key to the system's stealth capabilities. It performs three critical actions in a single headed browser session.
+The script `auth.py` is the key to the system's stealth capabilities.
+ It performs three critical actions in a single headed browser session.
 
 ### How to use:
 Run the command in your terminal:
 ```bash
-python auth_ultimate.py
+python auth.py
 ```
 
 ### The Three Phases:

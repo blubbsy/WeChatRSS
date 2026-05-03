@@ -30,7 +30,7 @@ WeChatRSS uses a **"Mimic-Human"** approach to bypass anti-bot measures, priorit
 
 ### Initial Setup & Auth
 1.  **Install Dependencies:** `pip install -r requirements.txt` (Note: `bcrypt<4.0.0` pinned for `passlib` compatibility).
-2.  **Ultimate Auth:** Run `python auth_ultimate.py` to perform a one-time WeChat/Sogou session capture in a headed browser.
+2.  **Ultimate Auth:** Run `python auth.py` to perform a one-time WeChat/Sogou session capture in a headed browser.
 3.  **Start Server:** `python main.py`. Access at `http://localhost:8000`.
 
 ### Security Hardening

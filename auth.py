@@ -12,7 +12,7 @@ src_dir = os.path.join(root_dir, 'src')
 if src_dir not in sys.path:
     sys.path.insert(0, src_dir)
 
-from src.auth_ultimate import run
+from src.auth import run
 
 if __name__ == "__main__":
     asyncio.run(run())

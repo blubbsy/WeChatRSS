@@ -24,7 +24,7 @@ A lightweight, high-reliability WeChat Official Account aggregator and RSS deliv
 2.  **Initialize Session:**
     Run the ultimate auth script to capture your "Human" fingerprint:
     ```bash
-    python auth_ultimate.py
+    python auth.py
     ```
     *   Scan the WeChat QR code to log in to WeRead.
     *   Solve the Sogou CAPTCHA when prompted.

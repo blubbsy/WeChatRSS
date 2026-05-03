@@ -21,7 +21,7 @@ By using persistent browser profiles and real-user sessions, the system looks ex
 If you have Python 3.13+ installed:
 
 1.  **Install:** `pip install -r requirements.txt`
-2.  **Auth:** `python auth_ultimate.py` (Scan QR + Solve CAPTCHA)
+2.  **Auth:** `python auth.py` (Scan QR + Solve CAPTCHA)
 3.  **Run:** `python main.py`
 4.  **Enjoy:** Go to `http://localhost:8000`
 

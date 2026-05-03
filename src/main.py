@@ -378,12 +378,12 @@ async def get_wechat_status(user: dict = Depends(require_user)):
 @app.post("/wechat/trigger-auth")
 async def trigger_wechat_auth(user: dict = Depends(require_admin), _csrf = Depends(verify_csrf)):
     """Triggers a new authentication flow."""
-    return {"status": "success", "message": "Please run 'python auth_ultimate.py' in your terminal."}
+    return {"status": "success", "message": "Please run 'python auth.py' in your terminal."}
 
 @app.post("/wechat/trigger-sogou-auth")
 async def trigger_sogou_auth(user: dict = Depends(require_admin), _csrf = Depends(verify_csrf)):
     """Triggers a new Sogou authentication flow."""
-    return {"status": "success", "message": "Please run 'python auth_ultimate.py' in your terminal."}
+    return {"status": "success", "message": "Please run 'python auth.py' in your terminal."}
 
 # --- System Logs & Stats ---
 
