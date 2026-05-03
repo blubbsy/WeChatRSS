@@ -1,0 +1,19 @@
+site_name: WeChatRSS Documentation
+theme:
+  name: material
+  palette:
+    primary: indigo
+    accent: indigo
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - content.code.copy
+
+nav:
+  - Home: index.md
+  - Architecture: architecture.md
+  - Authentication: authentication.md
+  - Scraping & Safety: scraping.md
+  - API Reference: api.md
+  - Installation: installation.md
+  - Audit & Roadmap: roadmap.md

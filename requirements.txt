@@ -1,0 +1,17 @@
+fastapi
+uvicorn
+playwright
+feedgen
+apscheduler
+readability-lxml
+lxml
+requests
+jinja2
+passlib[bcrypt]
+bcrypt<4.0.0
+python-multipart
+itsdangerous
+playwright-stealth
+beautifulsoup4
+aiofiles
+aiosqlite
