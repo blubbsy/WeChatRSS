@@ -31,7 +31,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Constants
-BASE_DIR = os.path.dirname(__file__)
+BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 PROFILE_DIR = os.path.abspath(os.path.join(BASE_DIR, 'data', 'profiles', 'wechat_rss_profile'))
 MEDIA_DIR = os.path.join(BASE_DIR, 'data', 'media')
 DEBUG_DIR = os.path.join(BASE_DIR, 'data', 'debug')

@@ -11,7 +11,8 @@ import hashlib
 from passlib.context import CryptContext
 
 # Configuration
-DB_PATH = os.path.join(os.path.dirname(__file__), 'data', 'wechat_rss.db')
+BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+DB_PATH = os.path.join(BASE_DIR, 'data', 'wechat_rss.db')
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def init_db():
