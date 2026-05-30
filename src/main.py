@@ -314,7 +314,20 @@ async def generate_feed(feed_hash: str, request: Request):
             articles = await cursor.fetchall()
         
         fg = FeedGenerator()
-        fg.load_extension('content') # Load content namespace for content:encoded
+        try:
+            fg.load_extension('content')  # Load content namespace for content:encoded
+        except ImportError as exc:
+            logger.warning(
+                "feedgen content extension is unavailable; RSS feeds will be generated without the "
+                "content:encoded namespace for full HTML content. "
+                f"Reason: {exc}"
+            )
+        except AttributeError as exc:
+            logger.warning(
+                "FeedGenerator.load_extension method not found; skipping optional content extension setup. "
+                "This may indicate an incompatible feedgen version. "
+                f"Reason: {exc}"
+            )
         fg.id(f"wechat-rss-{feed_hash}")
         fg.title(f"WeChat Full Feed - {username}")
         fg.link(href=f"https://mp.weixin.qq.com/", rel='alternate')
