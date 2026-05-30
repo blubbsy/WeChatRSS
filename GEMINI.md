@@ -47,5 +47,8 @@ A professional **MkDocs** site is available.
 
 ## 4. Development Conventions
 *   **Logging:** Always use `add_system_log` in `scraper.py` for user-facing visibility.
-*   **Database:** Use `get_db_async()` for all FastAPI endpoints.
+*   **Database:** Use `async with get_db_async() as conn:` for all database access. It is an async context manager that guarantees connection cleanup. Never call `conn.close()` manually.
 *   **Extraction:** Never fetch articles directly from `mp.weixin.qq.com` in background workers; always use the `fetch_full_content` proxy method.
+*   **Blocking I/O:** Never call synchronous blocking functions (e.g. `requests.get`, `os.listdir` on large dirs) directly in async code. Use `asyncio.to_thread()` to offload to the thread pool.
+*   **Sessions:** Sessions expire after 30 days (configurable via `SESSION_TTL_DAYS` in `database.py`). Expired sessions are cleaned up on server startup.
+*   **Lifecycle:** FastAPI uses the modern `lifespan` async context manager pattern (not deprecated `@app.on_event`).

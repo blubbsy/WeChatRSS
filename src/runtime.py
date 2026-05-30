@@ -7,19 +7,16 @@ have to manage job state directly.
 
 from __future__ import annotations
 
-import sqlite3
 from typing import Optional
-
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-
-from database import DB_PATH
+from database import get_db
 from scraper import scrape_wechat
 
 _scheduler: Optional[AsyncIOScheduler] = None
 
 
 def _load_scheduler_settings() -> tuple[int, int]:
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db()
     try:
         cursor = conn.cursor()
         cursor.execute("SELECT key, value FROM settings")
@@ -45,6 +42,31 @@ def _build_scheduler() -> AsyncIOScheduler:
         coalesce=True,
         replace_existing=True,
     )
+
+    # Periodic check for translation provider health (every 30 minutes)
+    from translator import check_all_providers
+    scheduler.add_job(
+        check_all_providers,
+        "interval",
+        minutes=30,
+        id="translation_health_check",
+        max_instances=1,
+        coalesce=True,
+        replace_existing=True,
+    )
+
+    # Periodic retry for failed/pending translations (every 5 minutes)
+    from translator import translate_pending_articles
+    scheduler.add_job(
+        translate_pending_articles,
+        "interval",
+        minutes=5,
+        id="translation_pending_retry",
+        max_instances=1,
+        coalesce=True,
+        replace_existing=True,
+    )
+
     return scheduler
 
 

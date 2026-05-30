@@ -1,19 +1,23 @@
 """
 Database management module for WeChatRSS.
-Handles SQLite schema initialization, user management, and connection pooling.
+Handles SQLite schema initialization, user management, and connection lifecycle.
 """
 
 import sqlite3
 import aiosqlite
 import os
 import secrets
-import hashlib
+import datetime
+from contextlib import asynccontextmanager
 from passlib.context import CryptContext
 
 # Configuration
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 DB_PATH = os.path.join(BASE_DIR, "data", "wechat_rss.db")
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+# Session expiry (30 days)
+SESSION_TTL_DAYS = 30
 
 
 def _configure_sqlite_connection(conn):
@@ -43,15 +47,22 @@ def init_db():
         )
     """)
 
-    # Sessions table
+    # Sessions table (with expiry)
     c.execute("""
         CREATE TABLE IF NOT EXISTS sessions (
             id TEXT PRIMARY KEY,
             user_id TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            expires_at TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users (id)
         )
     """)
+
+    # Migration: Add expires_at if missing
+    try:
+        c.execute("ALTER TABLE sessions ADD COLUMN expires_at TIMESTAMP")
+    except sqlite3.OperationalError:
+        pass  # Column already exists
 
     # Accounts table - Updated with status tracking
     c.execute("""
@@ -69,12 +80,17 @@ def init_db():
     """)
 
     # Migration: Add new columns to accounts if they don't exist
-    try:
-        c.execute('ALTER TABLE accounts ADD COLUMN last_status TEXT DEFAULT "pending"')
-        c.execute("ALTER TABLE accounts ADD COLUMN error_msg TEXT")
-        c.execute("ALTER TABLE accounts ADD COLUMN article_count INTEGER DEFAULT 0")
-    except:
-        pass  # Columns already exist
+    for col_sql in [
+        'ALTER TABLE accounts ADD COLUMN last_status TEXT DEFAULT "pending"',
+        "ALTER TABLE accounts ADD COLUMN error_msg TEXT",
+        "ALTER TABLE accounts ADD COLUMN article_count INTEGER DEFAULT 0",
+        "ALTER TABLE accounts ADD COLUMN sync_progress_current INTEGER DEFAULT 0",
+        "ALTER TABLE accounts ADD COLUMN sync_progress_total INTEGER DEFAULT 0",
+    ]:
+        try:
+            c.execute(col_sql)
+        except sqlite3.OperationalError:
+            pass  # Column already exists
 
     # Articles table
     c.execute("""
@@ -83,11 +99,29 @@ def init_db():
             account_id TEXT,
             title TEXT,
             url TEXT UNIQUE,
-            content HTML,
+            content TEXT,
             pub_date TIMESTAMP,
             fetch_date TIMESTAMP
         )
     """)
+
+    # Migration: Add new columns to articles if they don't exist
+    for col_sql in [
+        "ALTER TABLE articles ADD COLUMN translated_title TEXT",
+        "ALTER TABLE articles ADD COLUMN translated_content TEXT",
+        "ALTER TABLE articles ADD COLUMN translation_status TEXT DEFAULT 'pending'",
+        "ALTER TABLE articles ADD COLUMN translation_error TEXT",
+    ]:
+        try:
+            c.execute(col_sql)
+        except sqlite3.OperationalError:
+            pass  # Column already exists
+
+    # Align status for previously translated articles
+    try:
+        c.execute("UPDATE articles SET translation_status = 'success' WHERE translated_title IS NOT NULL AND translation_status = 'pending'")
+    except Exception:
+        pass
 
     # System Logs table
     c.execute("""
@@ -107,6 +141,24 @@ def init_db():
             value TEXT
         )
     """)
+
+    # --- Indexes for performance ---
+    c.execute(
+        "CREATE INDEX IF NOT EXISTS idx_articles_account_id ON articles (account_id)"
+    )
+    c.execute("CREATE INDEX IF NOT EXISTS idx_articles_url ON articles (url)")
+    c.execute(
+        "CREATE INDEX IF NOT EXISTS idx_articles_title_account ON articles (title, account_id)"
+    )
+    c.execute(
+        "CREATE INDEX IF NOT EXISTS idx_accounts_user_id ON accounts (user_id)"
+    )
+    c.execute(
+        "CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions (user_id)"
+    )
+    c.execute(
+        "CREATE INDEX IF NOT EXISTS idx_system_logs_timestamp ON system_logs (timestamp)"
+    )
 
     # Default system settings
     default_settings = {
@@ -132,6 +184,10 @@ def init_db():
         )
         print(f"Created default admin user. RSS Hash: {admin_feed_hash}")
 
+    # Cleanup expired sessions on startup
+    c.execute("DELETE FROM sessions WHERE expires_at IS NOT NULL AND expires_at < ?",
+              (datetime.datetime.now(datetime.timezone.utc).isoformat(),))
+
     conn.commit()
     conn.close()
 
@@ -143,14 +199,26 @@ def get_db():
     return conn
 
 
+@asynccontextmanager
 async def get_db_async():
+    """
+    Async context manager for database connections.
+    Guarantees the connection is always closed, even on exception.
+
+    Usage:
+        async with get_db_async() as conn:
+            await conn.execute(...)
+    """
     conn = await aiosqlite.connect(DB_PATH, timeout=5)
-    await conn.execute("PRAGMA journal_mode=WAL")
-    await conn.execute("PRAGMA synchronous=NORMAL")
-    await conn.execute("PRAGMA foreign_keys=ON")
-    await conn.execute("PRAGMA busy_timeout=5000")
-    conn.row_factory = aiosqlite.Row
-    return conn
+    try:
+        await conn.execute("PRAGMA journal_mode=WAL")
+        await conn.execute("PRAGMA synchronous=NORMAL")
+        await conn.execute("PRAGMA foreign_keys=ON")
+        await conn.execute("PRAGMA busy_timeout=5000")
+        conn.row_factory = aiosqlite.Row
+        yield conn
+    finally:
+        await conn.close()
 
 
 if __name__ == "__main__":
